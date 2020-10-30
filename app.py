@@ -188,7 +188,7 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
     trace_bu = go.Scatter(
         x=time_dt.index,
         y=time_dt["bb_bbh"],
-        name="Real Upper Bank",
+        name="Real Upper Band",
         line=dict(dash="dot"),
     )
     trace_bl = go.Scatter(
