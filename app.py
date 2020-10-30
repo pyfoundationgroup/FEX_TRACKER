@@ -10,8 +10,10 @@ from alpha_vantage.timeseries import TimeSeries
 import ta
 
 # read the currency codes
-code = pd.read_excel("curcode.xlsx")
-curcode = code["Value"].tolist()
+code_from = pd.read_excel("curcode.xlsx", sheet_name=1)
+curcode_from = code_from["Value"].tolist()
+code_to = pd.read_excel("curcode.xlsx", sheet_name=2)
+curcode_to = code_to["Value"].tolist()
 # curcode = [str.strip(x) for x in curcode]
 
 # initiate the app
@@ -28,7 +30,7 @@ app.layout = html.Div(
                 html.H3("From Currency", style={"paddingRight": "30px"}),
                 dcc.Dropdown(
                     id="FromCurrency",
-                    options=[{"label": i, "value": i} for i in curcode],
+                    options=[{"label": i, "value": i} for i in curcode_from],
                     value=curcode[curcode.index("EUR")],
                     clearable=False,
                     style={"fontsize": 24, "width": 75},
@@ -42,7 +44,7 @@ app.layout = html.Div(
                 html.H3("To Currency"),
                 dcc.Dropdown(
                     id="ToCurrency",
-                    options=[{"label": i, "value": i} for i in curcode],
+                    options=[{"label": i, "value": i} for i in curcode_to],
                     value=curcode[curcode.index("USD")],
                     clearable=False,
                     style={"fontsize": 24, "width": 75},
