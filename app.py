@@ -10,9 +10,9 @@ from alpha_vantage.timeseries import TimeSeries
 import ta
 
 # read the currency codes
-code_from = pd.read_excel("curcode.xlsx", sheet_name=1)
+code_from = pd.read_excel("curcode.xlsx", sheet_name=0)
 curcode_from = code_from["From"].tolist()
-code_to = pd.read_excel("curcode.xlsx", sheet_name=2)
+code_to = pd.read_excel("curcode.xlsx", sheet_name=1)
 curcode_to = code_to["To"].tolist()
 # curcode = [str.strip(x) for x in curcode]
 
