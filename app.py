@@ -31,7 +31,7 @@ app.layout = html.Div(
                 dcc.Dropdown(
                     id="FromCurrency",
                     options=[{"label": i, "value": i} for i in curcode_from],
-                    value=curcode[curcode.index("EUR")],
+                    value=curcode_from[curcode_from.index("EUR")],
                     clearable=False,
                     style={"fontsize": 24, "width": 75},
                 ),
@@ -45,7 +45,7 @@ app.layout = html.Div(
                 dcc.Dropdown(
                     id="ToCurrency",
                     options=[{"label": i, "value": i} for i in curcode_to],
-                    value=curcode[curcode.index("USD")],
+                    value=curcode_to[curcode_to.index("USD")],
                     clearable=False,
                     style={"fontsize": 24, "width": 75},
                 ),
