@@ -13,7 +13,6 @@ import ta
 code_from = pd.read_excel("curcode.xlsx", sheet_name=0)
 curcode_from = code_from["From"].tolist()
 code_to = pd.read_excel("curcode.xlsx", sheet_name=1)
-code_to["To"] = code_to["To"].str_replace(" ", "") 
 curcode_to = code_to["To"].tolist()
 # curcode = [str.strip(x) for x in curcode]
 
