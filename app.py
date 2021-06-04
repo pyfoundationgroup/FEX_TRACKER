@@ -1,9 +1,10 @@
 # importing required libraries
 import pandas as pd
-# import numpy as np
+import numpy as np
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
 from alpha_vantage.timeseries import TimeSeries
@@ -16,7 +17,11 @@ code_to = pd.read_excel("curcode.xlsx", sheet_name=1)
 curcode_to = code_to["To"].tolist()
 
 # initiate the app
-app = dash.Dash()
+app = dash.Dash(
+    __name__,
+    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+    external_stylesheets=[dbc.themes.MINTY],
+)
 server = app.server
 
 # app layout
@@ -32,10 +37,15 @@ app.layout = html.Div(
                     options=[{"label": i, "value": i} for i in curcode_from],
                     value=curcode_from[curcode_from.index("EUR")],
                     clearable=False,
-                    style={"fontsize": 24, "width": 75},
+                    style={"fontsize": 15, "width": 75},
                 ),
             ],
-            style={"display": "inline-block", "verticalAlign": "middle"},
+            style={
+                "display": "inline-block",
+                "verticalAlign": "middle",
+                "paddingBottom": "5px",
+                "paddingLeft": "10px",
+            },
         ),
         # to currency dropdown
         html.Div(
@@ -46,10 +56,14 @@ app.layout = html.Div(
                     options=[{"label": i, "value": i} for i in curcode_to],
                     value=curcode_to[curcode_to.index("USD")],
                     clearable=False,
-                    style={"fontsize": 24, "width": 75},
+                    style={"fontsize": 15, "width": 75},
                 ),
             ],
-            style={"display": "inline-block", "verticalAlign": "middle"},
+            style={
+                "display": "inline-block",
+                "verticalAlign": "middle",
+                "paddingBottom": "5px",
+            },
         ),
         # the submit button
         html.Div(
@@ -58,10 +72,14 @@ app.layout = html.Div(
                     id="submit-button",
                     n_clicks=0,
                     children="View",
-                    style={"fontSize": 20, "marginLeft": "20px"},
+                    style={"fontSize": 18, "marginLeft": "20px"},
                 )
             ],
-            style={"display": "inline-block", "verticalAlign": "bottom"},
+            style={
+                "display": "inline-block",
+                "verticalAlign": "bottom",
+                "paddingBottom": "5px",
+            },
         ),
         # the graphs
         dcc.Graph(id="candle"),
@@ -76,7 +94,6 @@ app.layout = html.Div(
         ),
     ]
 )
-
 
 # app functions
 @app.callback(
@@ -103,31 +120,39 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
     time_data, metadata = ts.get_intraday(
         symbol=from_currency + to_currency, interval="1min", outputsize="full"
     )
-    
+
     # sort the data frame in ascending order as per date and time
     time_data = time_data.sort_index()
-    
+
     # keep the last 500 data points to calculate the indicators
     # time_data = time_data.iloc[-500:, ]
 
     # prepare data for 5 min candlestick chart
     # slice the last 104 rows
-    time_c = time_data.iloc[-104:,]
+    time_c = time_data.iloc[
+        -104:,
+    ]
     # get the 5 minute highs and lows
     time_c["5m high"] = time_c["2. high"].rolling(5).max()
     time_c["5m low"] = time_c["3. low"].rolling(5).min()
     # filter out the na rows
     time_ct = time_c[pd.notnull(time_c["5m high"])]
     # reverse the order to get each 5 rows from last
-    time_ct = time_ct.iloc[::-1,]
+    time_ct = time_ct.iloc[
+        ::-1,
+    ]
     # get each 5 rows from last
-    time_ct = time_ct.iloc[::5,]
+    time_ct = time_ct.iloc[
+        ::5,
+    ]
     # now reverse the order again
-    time_ct = time_ct.iloc[::-1,]
+    time_ct = time_ct.iloc[
+        ::-1,
+    ]
 
     # Initialize Bollinger Bands Indicator
     indicator_bb = ta.volatility.BollingerBands(
-        close=time_data["4. close"], n=60, ndev=2
+        close=time_data["4. close"], window=60, window_dev=2
     )
 
     # Add Bollinger Bands features
@@ -137,7 +162,7 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
 
     # initiate macd
     trend_macd = ta.trend.MACD(
-        close=time_data["4. close"], n_slow=26, n_fast=12, n_sign=9
+        close=time_data["4. close"], window_slow=26, window_fast=12, window_sign=9
     )
 
     # add macd features
@@ -145,19 +170,21 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
     time_data["macd_signal"] = trend_macd.macd_signal()
     # time_data['macd_hist'] = time_data["macd"]-time_data["macd_signal"]
     time_data["macd_hist"] = trend_macd.macd_diff()
-        
+
     # initiate rsi
-    momentum_rsi = ta.momentum.RSIIndicator(close=time_data["4. close"], n=60)
+    momentum_rsi = ta.momentum.RSIIndicator(close=time_data["4. close"], window=60)
 
     # add rsi feature
     time_data["rsi"] = momentum_rsi.rsi()
 
     # keep only the last 100 data points for charting
-    time_dt = time_data.iloc[-100:,]
+    time_dt = time_data.iloc[
+        -100:,
+    ]
 
     # make candlestick chart
     can_tim = go.Scatter(
-        x=time_ct.index, y=time_ct["4. close"], line=dict(color="#000000", dash="dot")
+        x=time_ct.index, y=time_ct["4. close"], line=dict(color="#034f84", dash="dot")
     )
     candleplot = go.Candlestick(
         x=time_ct.index,
@@ -174,6 +201,7 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
         + to_currency
         + " (Last 100 Minutes)",
         showlegend=False,
+        template="plotly",
     )
     data_candle = [candleplot, can_tim]
     fig_candle = go.Figure(data=data_candle, layout=layout_candle)
@@ -208,7 +236,7 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
         x=time_dt.index,
         y=time_dt["4. close"],
         name=from_currency + to_currency,
-        line=dict(color="#000000"),
+        line=dict(color="#622569"),
     )
     layout_bol = go.Layout(
         title="[Bollinger Band (Per Minute Basis)]"
@@ -216,7 +244,8 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
         + from_currency
         + "/"
         + to_currency
-        + " (Last 100 Time Points)"
+        + " (Last 100 Time Points)",
+        template="plotly",
     )
 
     data_bol = [trace_bu, trace_bl, trace_bm, time_p]
@@ -224,9 +253,9 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
 
     # plot macd
     # add macd histogram color
-    bpos="#009E73"
-    bneg="#CC79A7"
-    clr_hist  = [bpos if x>0 else bneg for x in time_dt["macd_hist"]]
+    bpos = "#009E73"
+    bneg = "#CC79A7"
+    clr_hist = [bpos if x > 0 else bneg for x in time_dt["macd_hist"]]
 
     # macd chart
     trace_macd = go.Scatter(x=time_dt.index, y=time_dt["macd"], name="MACD")
@@ -237,7 +266,8 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
         x=time_dt.index,
         y=time_dt["macd_hist"],
         name="MACD HISTOGRAM",
-        marker={'color':clr_hist}, showlegend=False
+        marker={"color": clr_hist},
+        showlegend=False,
     )
     layout_macd = go.Layout(
         title="[MACD (Per Minute Basis)]"
@@ -245,59 +275,61 @@ def RealTimeCurrencyExchangeRate(n_clicks, n_intervals, from_currency, to_curren
         + from_currency
         + "/"
         + to_currency
-        + " (Last 100 Time Points)"
+        + " (Last 100 Time Points)",
+        template="plotly",
     )
 
     data_macd = [trace_macd, trace_macdS, trace_macdH]
     fig_MACD = go.Figure(data=data_macd, layout=layout_macd)
 
     # plot rsi
-    trace_rsi = go.Scatter(x=time_dt.index, y=time_dt["rsi"])
+    trace_rsi = go.Scatter(
+        x=time_dt.index, y=time_dt["rsi"], name="RSI", line=dict(color="#405d27")
+    )
     layout_rsi = go.Layout(
         title="[RSI (Per Minute Basis)]"
         + " "
         + from_currency
         + "/"
         + to_currency
-        + " (Last 100 Time Points)"
+        + " (Last 100 Time Points)",
+        template="plotly",
     )
 
     data_rsi = [trace_rsi]
     fig_rsi = go.Figure(data=data_rsi, layout=layout_rsi)
-    
+
     # add upper band at 55
     fig_rsi.add_shape(
         # Line Horizontal
-            type="line",
-            x0=time_dt.index[0],
-            y0=55,
-            x1=time_dt.index[-1],
-            y1=55,
-            line=dict(
-                color="LightSeaGreen",
-                width=4,
-                dash="dot",
-            ),
+        type="line",
+        x0=time_dt.index[0],
+        y0=55,
+        x1=time_dt.index[-1],
+        y1=55,
+        line=dict(color="#c94c4c", width=4, dash="dot",),
+        name="Upper Band",
     )
-            
+
     # add lower band at 45
     fig_rsi.add_shape(
         # Line Horizontal
-            type="line",
-            x0=time_dt.index[0],
-            y0=45,
-            x1=time_dt.index[-1],
-            y1=45,
-            line=dict(
-                color="red",
-                width=4,
-                dash="dot",
-            ),
+        type="line",
+        x0=time_dt.index[0],
+        y0=45,
+        x1=time_dt.index[-1],
+        y1=45,
+        line=dict(color="#36486b", width=4, dash="dot",),
+        name="Lower Band",
     )
 
-    # return the output
+    fig_rsi.update_layout(showlegend=False)
+
+    # return the outputfig.update_layout(showlegend=True)
     return (fig_candle, fig_bol, fig_rsi, fig_MACD)
+
 
 # launch the app
 if __name__ == "__main__":
     app.run_server(debug=False, threaded=True)
+
